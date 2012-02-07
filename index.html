@@ -1,0 +1,198 @@
+<html>
+	<head>
+		<title>Graphics Engine</title>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+	</head>
+	<body>
+		<canvas id="cvs"></canvas>
+		<script>				
+			//Globals
+			var cvs 		= document.getElementById('cvs'),
+				ctx 		= cvs.getContext('2d'),
+				characters 	= [],
+				width 		= height = 500;
+			cvs.width 		= width,
+			cvs.height 		= height;
+					
+			//Keyboard functions
+			var kkeys 	= {},
+				isDown 	= function(char) {
+					return kkeys[char];
+				};
+				
+			$(document).keydown(function(e) {				
+				kkeys[String.fromCharCode(e.keyCode)] = true;	
+				//Prevent beep
+				return false;
+			});
+			$(document).keyup(function(e) {
+				kkeys[String.fromCharCode(e.keyCode)] = false;
+			});						
+			
+			//Main function	
+			var go 			= function() {				
+				var t = 0;
+				var int = setInterval(function() {
+					ctx.clearRect(0,0,1000,1000);					
+					move(t), draw(t);
+					t++;				
+				}, 30);
+			};
+				
+			//Constructors			
+			var Rect 		= function(options) {				
+				var color = options.color || "#000", 
+					x = options.x, 
+					y = options.y, 
+					width = options.width, 
+					height = options.height, 
+					size = options.size;
+				this.x = x;
+				this.y = y;
+				this.color = color;
+				
+				//Either maintain height, width or just size
+				this.width = width || size;
+				this.height = height || size;
+			};			
+			var Character 	= function(parameters) {							
+				shapes = parameters.shapes || [], 
+				title = parameters.title || "", 
+				speeds = parameters.speeds || {x: Function('return 0'), y: Function('return 0')}, 
+				collisions = parameters.collisions || {};
+							
+				this.title = title;
+				this.shapes = shapes;				
+				this.speed = {
+					x: speeds.x,
+					y: speeds.y
+				};
+				this.offset = {
+					x: 0,
+					y: 0
+				};								
+				this.collisions = collisions;				
+								
+				characters.push(this);				
+			};
+			
+			//Bulk drawing
+			var drawRects 	= function(rects, offset, overrideColor) {
+				for( var k in rects ) {
+					var rect = rects[k];					
+					//Defaults
+					rect.width 	= rect.width  || rect.size,
+					rect.height = rect.height || rect.size;
+					offset = offset || {
+						x: 0, y: 0
+					};				
+
+					ctx.fillStyle = overrideColor || rect.color;											
+					ctx.fillRect(rect.x+offset.x, height-(rect.y+offset.y), rect.width, rect.height);		
+				}
+			};	
+			
+			//Functions performed on all characters
+			var move 		= function(t) {
+				for( var k in characters ) {
+					character = characters[k];					
+					character.move(t);					
+				}
+			};
+			var draw 		= function(t) {
+				for( var k in characters ) {
+					character = characters[k];					
+					character.shade(t);
+				}
+			};
+			
+			//Prototype functions
+			Character.prototype.shade 		= function() {
+				drawRects(this.shapes, this.offset);
+			};
+			Character.prototype.move 		= function(t) {
+				//Speed is a function of time -- more natural than position
+				this.offset.x += this.speed.x(t);
+				this.offset.y += this.speed.y(t);
+			};
+			Character.prototype.isOccupied 	= function(x,y) {
+				for( var k in this.shapes ) {
+					var shape = this.shapes[k],
+						pastx = x - (shape.width  || shape.size),
+						pasty = y - (shape.height || shape.size);							
+					
+					//Check if x and y are in this shape
+					if(
+						(pastx <= this.offset.x && pastx >= -shape.width)
+						&&
+						(pasty <= this.offset.y && pasty >= -shape.height)
+					) return true;
+				}
+				return false;
+			};
+			Character.prototype.overlaps 	= function(character) {
+				for( var k in shapes ) {
+					var shape  = character.shapes[k],
+						offset = character.offset;
+					
+					//Check corners for overlap
+					if(		(this.isOccupied(offset.x+shape.x, offset.y+shape.y)) ||
+							(this.isOccupied(offset.x+shape.x+(shape.width||shape.size), offset.y+shape.y)) ||
+							(this.isOccupied(offset.x+shape.x, offset.y+(shape.height||shape.size))) ||
+							(this.isOccupied(offset.x+shape.x+(shape.width||shape.size), offset.y+shape.y+(shape.height||shape.size)))
+					) return true;
+				}
+				return false;
+			};
+			
+			//Instances of characters			
+			var person 		= new Character({
+				shapes: [new Rect({
+							x: 25,
+							y: 25,
+							size: 25
+						})], 
+				title: "Person", 
+				speeds: {
+					x: function(t) {
+						if(person.overlaps(person2)) alert("You lose!"), characters = [];
+					
+						if( isDown("A") ) return -1;
+						if( isDown("D") ) return 1;
+						return 0;
+					},
+					y: function(t) {
+						if( isDown("S") ) return -1;
+						if( isDown("W") ) return 1;
+						return 0;
+					}
+				}, 
+				positions: {
+					person2: function() {
+						console.log("Collide!");	
+					}				
+				}
+			});
+			var person2 	= new Character({
+				shapes: [new Rect({
+							x: 200,
+							y: 400,
+							size: 10,
+							color: "#f00"
+						})], 
+				title: "Person2", 
+				speeds: {
+					x: function(t) {
+						return 200*Math.cos(t/4)*1/4;
+					},
+					y: function(t) {
+						return -200*Math.sin(t/4)*1/4;
+					}
+				}
+			});																
+			
+			//GO!
+			go();
+		</script>
+	</body>
+</html>
