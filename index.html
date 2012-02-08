@@ -1,7 +1,7 @@
 <html>
 	<head>
 		<title>Graphics Engine</title>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+		<script src="jquery-1.6.2.min.js"></script>
 	</head>
 	<body>
 		<canvas id="cvs"></canvas>
@@ -9,7 +9,7 @@
 			//Globals
 			var cvs 		= document.getElementById('cvs'),
 				ctx 		= cvs.getContext('2d'),
-				characters 	= [],
+				characters 	= {},
 				width 		= height = 500;
 			cvs.width 		= width,
 			cvs.height 		= height;
@@ -55,7 +55,7 @@
 				this.width = width || size;
 				this.height = height || size;
 			};			
-			var Character 	= function(parameters) {							
+			var Character 	= function(parameters, spawn /*Pushes new character by default*/) {							
 				shapes = parameters.shapes || [], 
 				title = parameters.title || "", 
 				speeds = parameters.speeds || {x: Function('return 0'), y: Function('return 0')}, 
@@ -72,8 +72,8 @@
 					y: 0
 				};								
 				this.collisions = collisions;				
-								
-				characters.push(this);				
+					
+				if( spawn !== false ) characters[title] = this;				
 			};
 			
 			//Bulk drawing
@@ -97,6 +97,13 @@
 				for( var k in characters ) {
 					character = characters[k];					
 					character.move(t);					
+					
+					var collisions = character.collisions;
+					for( var k in collisions ) {
+						var collision = collisions[k];
+						
+						character.overlaps(window[k]) || window[k].overlaps(character) && collision();
+					}
 				}
 			};
 			var draw 		= function(t) {
@@ -112,20 +119,21 @@
 			};
 			Character.prototype.move 		= function(t) {
 				//Speed is a function of time -- more natural than position
-				this.offset.x += this.speed.x(t);
-				this.offset.y += this.speed.y(t);
+				this.offset.x += this.speed.x.call(this, t);
+				this.offset.y += this.speed.y.call(this, t);
 			};
 			Character.prototype.isOccupied 	= function(x,y) {
 				for( var k in this.shapes ) {
 					var shape = this.shapes[k],
-						pastx = x - (shape.width  || shape.size),
-						pasty = y - (shape.height || shape.size);							
-					
-					//Check if x and y are in this shape
-					if(
-						(pastx <= this.offset.x && pastx >= -shape.width)
-						&&
-						(pasty <= this.offset.y && pasty >= -shape.height)
+						pastx = x + (shape.width  || shape.size),
+						pasty = y + (shape.height || shape.size);							
+				
+				//Check if x is in range [offset.x + shape.x, offset.x + shape.x + size]
+				//Check if y is in range [offset.y + shape.y, offset.y + shape.y + size]
+				
+				if(
+						(pastx >= (this.offset.x+shape.x) && pastx <= (this.offset.x+shape.x)+shape.width) &&
+						(pasty >= (this.offset.y+shape.y) && pasty <= (this.offset.y+shape.y)+shape.height)
 					) return true;
 				}
 				return false;
@@ -133,7 +141,7 @@
 			Character.prototype.overlaps 	= function(character) {
 				for( var k in shapes ) {
 					var shape  = character.shapes[k],
-						offset = character.offset;
+						offset = character.offset;					
 					
 					//Check corners for overlap
 					if(		(this.isOccupied(offset.x+shape.x, offset.y+shape.y)) ||
@@ -143,6 +151,12 @@
 					) return true;
 				}
 				return false;
+			};
+			Character.prototype.kill		= function() {
+				delete(characters[this.title]);
+			};
+			Character.prototype.revive		= function() {
+				characters[this.title] = this;
 			};
 			
 			//Instances of characters			
@@ -154,9 +168,7 @@
 						})], 
 				title: "Person", 
 				speeds: {
-					x: function(t) {
-						if(person.overlaps(person2)) alert("You lose!"), characters = [];
-					
+					x: function(t) {										
 						if( isDown("A") ) return -1;
 						if( isDown("D") ) return 1;
 						return 0;
@@ -167,29 +179,31 @@
 						return 0;
 					}
 				}, 
-				positions: {
-					person2: function() {
-						console.log("Collide!");	
+				collisions: {
+					bullet: function() {
+						person.kill();
 					}				
 				}
 			});
-			var person2 	= new Character({
+			var bullet 	= new Character({
 				shapes: [new Rect({
 							x: 200,
 							y: 400,
 							size: 10,
 							color: "#f00"
 						})], 
-				title: "Person2", 
+				title: "Bullet", 
 				speeds: {
 					x: function(t) {
-						return 200*Math.cos(t/4)*1/4;
+						//return 200*Math.cos(t/4)*1/4;
+						return 0;
 					},
 					y: function(t) {
-						return -200*Math.sin(t/4)*1/4;
+						//return -200*Math.sin(t/4)*1/4;
+						return -1;
 					}
 				}
-			});																
+			});															
 			
 			//GO!
 			go();
