@@ -1,30 +1,45 @@
+//Simple extension
+Object.prototype.extend = function(/* variable number of arguments */) {
+	var args = Array.prototype.slice.call(arguments);
+	console.log(args);
+	for( var k in args ) {
+		var push = typeof(arguments[k]) != "function" ? arguments[k] : {};
+		console.log(push);
+		for(var k in push)
+			this[k] = push[k];
+	}
+};
+
 //Keyboard functions
 var kkeys 	= {},
 	isDown 	= function(char) {
 		return kkeys[char];
 	};
 	
-$(document).keydown(function(e) {				
-	kkeys[String.fromCharCode(e.keyCode)] = true;	
-	//Prevent beep
-	return false;
-});
-$(document).keyup(function(e) {
-	kkeys[String.fromCharCode(e.keyCode)] = false;
-});						
+var handleKeyPresses = function() {
+	$(document).keydown(function(e) {				
+		kkeys[String.fromCharCode(e.keyCode)] = true;	
+		//Prevent beep
+		return false;
+	});
+	$(document).keyup(function(e) {
+		kkeys[String.fromCharCode(e.keyCode)] = false;
+	});	
+};					
 
 //Main function	
-var go 			= function() {				
+var go = function() {				
 	var t = 0;
+	handleKeyPresses();
 	var int = setInterval(function() {
 		ctx.clearRect(0,0,1000,1000);					
-		move(t), draw(t);
+		characters.move(t), characters.draw(t);
 		t++;				
 	}, 30);
 };
 	
 //Constructors			
-var Rect 		= function(options) {				
+var Rect = function(options) {				
 	var color = options.color || "#000", 
 		x = options.x, 
 		y = options.y, 
@@ -39,7 +54,7 @@ var Rect 		= function(options) {
 	this.width = width || size;
 	this.height = height || size;
 };			
-var Character 	= function(parameters, spawn /*Pushes new character by default*/) {							
+var Character = function(parameters, spawn /*Pushes new character by default*/) {							
 	shapes = parameters.shapes || [], 
 	title = parameters.title || "", 
 	speeds = parameters.speeds || {x: Function('return 0'), y: Function('return 0')}, 
@@ -59,47 +74,53 @@ var Character 	= function(parameters, spawn /*Pushes new character by default*/)
 		
 	if( spawn !== false ) characters[title] = this;				
 };
-
-//Bulk drawing
-var drawRects 	= function(rects, offset, overrideColor) {
-	for( var k in rects ) {
-		var rect = rects[k];					
-		//Defaults
-		rect.width 	= rect.width  || rect.size,
-		rect.height = rect.height || rect.size;
-		offset = offset || {
-			x: 0, y: 0
-		};				
-
-		ctx.fillStyle = overrideColor || rect.color;											
-		ctx.fillRect(rect.x+offset.x, height-(rect.y+offset.y), rect.width, rect.height);		
-	}
+var CharacterList = function(arr) { 
+	for( var k in arr )
+		this[k] = arr[k];
 };	
 
-//Functions performed on all characters
-var move 		= function(t) {
-	for( var k in characters ) {
-		character = characters[k];					
-		character.move(t);					
-		
-		var collisions = character.collisions;
-		for( var k in collisions ) {
-			var collision = collisions[k];
+//Character extends Array, extended with move and draw
+CharacterList.prototype.extend(Array.prototype, {
+	move: function(t) {
+		var characters = this;
+		for( var k in characters ) {
+			character = characters[k];					
+			character.move && character.move(t);					
 			
-			character.overlaps(characters[k]) || characters[k].overlaps(character) && collision();
+			var collisions = character.collisions;
+			for( var k in collisions ) {
+				var collision = collisions[k];
+				
+				character.overlaps && character.overlaps(characters[k]) || characters[k].overlaps && characters[k].overlaps(character) && collision();
+			}
+		}
+	},
+	draw: function(t) {
+		var characters = this;
+		for( var k in characters ) {
+			character = characters[k];					
+			character.shade && character.shade(t);
 		}
 	}
-};
-var draw 		= function(t) {
-	for( var k in characters ) {
-		character = characters[k];					
-		character.shade(t);
-	}
-};
+});
 
 Character.prototype = {
-	shade: function() {
-		drawRects(this.shapes, this.offset);
+	shade: function() {		
+		//Bulk drawing
+		(function(rects, offset, overrideColor) {
+			for( var k in rects ) {
+				var rect = rects[k];					
+				//Defaults
+				rect.width 	= rect.width  || rect.size,
+				rect.height = rect.height || rect.size;
+				offset = offset || {
+					x: 0, y: 0
+				};				
+		
+				ctx.fillStyle = overrideColor || rect.color;											
+				ctx.fillRect(rect.x+offset.x, height-(rect.y+offset.y), rect.width, rect.height);		
+			}
+		})(this.shapes, this.offset);
 	},
 	move: function(t) {
 		//Speed is a function of time -- more natural than position
@@ -123,7 +144,8 @@ Character.prototype = {
 		return false;
 	},
 	overlaps: function(character) {
-		for( var k in shapes ) {
+		for( var k in this.shapes ) {
+			if( !character.shapes ) continue;
 			var shape  = character.shapes[k],
 				offset = character.offset;					
 			
