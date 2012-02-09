@@ -1,7 +1,6 @@
 //Simple extension
 Object.prototype.extend = function(/* variable number of arguments */) {
 	var args = Array.prototype.slice.call(arguments);
-	console.log(args);
 	for( var k in args ) {
 		var push = typeof(arguments[k]) != "function" ? arguments[k] : {};
 		console.log(push);
@@ -28,7 +27,7 @@ var handleKeyPresses = function() {
 };					
 
 //Main function	
-var go = function() {				
+var go = function(characters) {				
 	var t = 0;
 	handleKeyPresses();
 	var int = setInterval(function() {

@@ -9,7 +9,7 @@
 		<script>	
 			var cvs 		= document.getElementById('cvs'),
 				ctx 		= cvs.getContext('2d'),
-				characters 	= {},
+				characters 	= new CharacterList({}),
 				width 		= height = 500;
 			cvs.width 		= width,
 			cvs.height 		= height;
@@ -59,7 +59,7 @@
 			});															
 			
 			//GO!
-			go();
+			go(characters);
 		</script>
 	</body>
 </html>
