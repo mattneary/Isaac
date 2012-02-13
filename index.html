@@ -34,14 +34,11 @@
 			var incrementScore = function() {
 				score++;
 				
-				//Set color for score
-				ctx.fillStyle = '#cfcceb';
-				
 				//Potentially handle scores here
 			};
 											
 			//Instances of characters	
-			var person 		= new Character({
+			var person = new Character({
 				shapes: [new Rect({
 							x: 25,
 							y: 25,
@@ -63,17 +60,18 @@
 				collisions: {
 					apple: function() {
 						apple.kill();
-						generateApple();
+						Apple().revive();
 						incrementScore();
 					}				
 				}
-			});				
-			var apple;
-			var generateApple = function() {
-				apple 	= new Character({
+			});		
+			
+			//Apple constructor		
+			var Apple = function() {
+				return new Character({
 					shapes: [new Rect({
-								x: Math.random()*500,
-								y: Math.random()*500,
+								x: Math.random()*400,
+								y: Math.random()*400,
 								size: 10,
 								color: "#f00"
 							})], 
@@ -86,9 +84,9 @@
 							return 0;
 						}
 					}
-				});
+				});	
 			};
-			generateApple();															
+			var apple = Apple();													
 			
 			//GO!
 			go(characters);

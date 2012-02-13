@@ -108,9 +108,10 @@ Character.prototype = {
 		//Check if x is in range [offset.x + shape.x, offset.x + shape.x + size]
 		//Check if y is in range [offset.y + shape.y, offset.y + shape.y + size]
 		
+		var error = 3;
 		if(
-				(pastx >= (this.offset.x+shape.x-5) && pastx <= (this.offset.x+shape.x)+shape.width+5) &&
-				(pasty >= (this.offset.y+shape.y-5) && pasty <= (this.offset.y+shape.y)+shape.height+5)
+				(pastx >= (this.offset.x+shape.x-error) && pastx <= (this.offset.x+shape.x)+shape.width+error) &&
+				(pasty >= (this.offset.y+shape.y-error) && pasty <= (this.offset.y+shape.y)+shape.height+error)
 			) return true;
 		}
 		return false;
