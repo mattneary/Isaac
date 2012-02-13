@@ -7,14 +7,40 @@
 	<body>
 		<canvas id="cvs"></canvas>
 		<script>	
-			var cvs 		= document.getElementById('cvs'),
+			var int			/*Animation Interval*/,
+				cvs 		= document.getElementById('cvs'),
 				ctx 		= cvs.getContext('2d'),
 				characters 	= new CharacterList({}),
 				width 		= height = 500;
 			cvs.width 		= width,
-			cvs.height 		= height;
+			cvs.height 		= height,
+			score			= 0,
+			//Character with empty shape and text function to show score
+			scoreboard		= new Character({
+				shapes: [new Rect({
+							x: 0,
+							y: 500,
+							width: 0,
+							height: 50,
+							color: '#cfcceb'
+						})], 
+				text: function() {
+					return "Score: "+score;
+				},
+				title: "score_board"
+			});
+									
+			//Score-board
+			var incrementScore = function() {
+				score++;
+				
+				//Set color for score
+				ctx.fillStyle = '#cfcceb';
+				
+				//Potentially handle scores here
+			};
 											
-			//Instances of characters			
+			//Instances of characters	
 			var person 		= new Character({
 				shapes: [new Rect({
 							x: 25,
@@ -23,43 +49,66 @@
 						})], 
 				title: "person", 
 				speeds: {
-					x: function(t) {										
-						if( isDown("A") ) return -1;
-						if( isDown("D") ) return 1;
+					x: function(t) {																						
+						if( isDown("A") ) return -5;
+						if( isDown("D") ) return 5;
 						return 0;
 					},
 					y: function(t) {
-						if( isDown("S") ) return -1;
-						if( isDown("W") ) return 1;
+						if( isDown("S") ) return -5;
+						if( isDown("W") ) return 5;
 						return 0;
 					}
 				}, 
 				collisions: {
-					bullet: function() {
-						person.kill();
+					apple: function() {
+						apple.kill();
+						generateApple();
+						incrementScore();
 					}				
 				}
-			});
-			var bullet 	= new Character({
-				shapes: [new Rect({
-							x: 200,
-							y: 400,
-							size: 10,
-							color: "#f00"
-						})], 
-				title: "bullet", 
-				speeds: {
-					x: function(t) {
-						return 0;
-					},
-					y: function(t) {
-						return -1;
+			});				
+			var apple;
+			var generateApple = function() {
+				apple 	= new Character({
+					shapes: [new Rect({
+								x: Math.random()*500,
+								y: Math.random()*500,
+								size: 10,
+								color: "#f00"
+							})], 
+					title: "apple", 
+					speeds: {
+						x: function(t) {
+							return 0;
+						},
+						y: function(t) {
+							return 0;
+						}
 					}
-				}
-			});															
+				});
+			};
+			generateApple();															
 			
 			//GO!
 			go(characters);
+			setTimeout(function() {
+				//Limit time to 15 secs until animation is cancelled
+				clearInterval(int);
+				(new Character({
+					shapes: [new Rect({
+								x: 100,
+								y: 300,
+								width: 0,
+								height: 50,
+								color: '#f00'
+							})], 
+					text: function() {
+						return "Game Over (Score: "+score+")";
+					},
+					title: "score_board"
+				})).shade();
+			}, 15e3)
 		</script>
 	</body>
 </html>

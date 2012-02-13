@@ -13,7 +13,7 @@ Object.prototype.extend = function(/* variable number of arguments */) {
 var go = function(characters) {				
 	var t = 0;
 	handleKeyPresses();
-	var int = setInterval(function() {
+	int = setInterval(function() {
 		ctx.clearRect(0,0,1000,1000);					
 		characters.move(t), characters.draw(t);
 		t++;				

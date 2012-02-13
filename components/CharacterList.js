@@ -9,13 +9,14 @@ CharacterList.prototype.extend(Array.prototype, {
 		var characters = this;
 		for( var k in characters ) {
 			character = characters[k];					
-			character.move && character.move(t);					
+			character && character.move && character.move(t);					
 			
 			var collisions = character.collisions;
 			for( var k in collisions ) {
 				var collision = collisions[k];
 				
-				character.overlaps && character.overlaps(characters[k]) || characters[k].overlaps && characters[k].overlaps(character) && collision();
+				if( characters[k] && characters[k].overlaps )
+				character && character.overlaps && character.overlaps(characters[k]) || characters[k].overlaps && characters[k].overlaps(character) && collision();
 			}
 		}
 	},
@@ -23,7 +24,7 @@ CharacterList.prototype.extend(Array.prototype, {
 		var characters = this;
 		for( var k in characters ) {
 			character = characters[k];					
-			character.shade && character.shade(t);
+			character && character.shade && character.shade(t);
 		}
 	}
 });

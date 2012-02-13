@@ -14,7 +14,9 @@ var Character = function(parameters, spawn /*Pushes new character by default*/) 
 		x: 0,
 		y: 0
 	};								
-	this.collisions = collisions;				
+	this.collisions = collisions;	
+		
+	this.text = parameters.text;			
 		
 	if( spawn !== false ) characters[title] = this;				
 };
@@ -22,6 +24,7 @@ var Character = function(parameters, spawn /*Pushes new character by default*/) 
 Character.prototype = {
 	shade: function() {		
 		//Bulk drawing
+		var text = this.text ? this.text() : '';
 		(function(rects, offset, overrideColor) {
 			for( var k in rects ) {
 				var rect = rects[k];					
@@ -34,6 +37,11 @@ Character.prototype = {
 		
 				ctx.fillStyle = overrideColor || rect.color;											
 				ctx.fillRect(rect.x+offset.x, height-(rect.y+offset.y), rect.width, rect.height);		
+				
+				ctx.font         = 'italic 30px sans-serif';
+				ctx.textBaseline = 'top';
+				if( text )
+					console.log("Filling"), ctx.fillText(text, rect.x+offset.x, height-(rect.y+offset.y));
 			}
 		})(this.shapes, this.offset);
 	},
@@ -52,15 +60,15 @@ Character.prototype = {
 		//Check if y is in range [offset.y + shape.y, offset.y + shape.y + size]
 		
 		if(
-				(pastx >= (this.offset.x+shape.x) && pastx <= (this.offset.x+shape.x)+shape.width) &&
-				(pasty >= (this.offset.y+shape.y) && pasty <= (this.offset.y+shape.y)+shape.height)
+				(pastx >= (this.offset.x+shape.x-5) && pastx <= (this.offset.x+shape.x)+shape.width+5) &&
+				(pasty >= (this.offset.y+shape.y-5) && pasty <= (this.offset.y+shape.y)+shape.height+5)
 			) return true;
 		}
 		return false;
 	},
 	overlaps: function(character) {
 		for( var k in this.shapes ) {
-			if( !character.shapes ) continue;
+			if( !character || !character.shapes ) continue;
 			var shape  = character.shapes[k],
 				offset = character.offset;					
 			
