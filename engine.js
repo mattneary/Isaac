@@ -5,12 +5,12 @@ var kkeys 	= {},
 	};
 	
 var handleKeyPresses = function() {
-	$(document).keydown(function(e) {				
+	window.onkeydown = (function(e) {				
 		kkeys[String.fromCharCode(e.keyCode)] = true;	
 		//Prevent beep
 		return false;
 	});
-	$(document).keyup(function(e) {
+	window.onkeyup = (function(e) {
 		kkeys[String.fromCharCode(e.keyCode)] = false;
 	});	
 };	//Simple extension
@@ -108,7 +108,7 @@ Character.prototype = {
 		//Check if x is in range [offset.x + shape.x, offset.x + shape.x + size]
 		//Check if y is in range [offset.y + shape.y, offset.y + shape.y + size]
 		
-		var error = 3;
+		var error = 2;
 		if(
 				(pastx >= (this.offset.x+shape.x-error) && pastx <= (this.offset.x+shape.x)+shape.width+error) &&
 				(pasty >= (this.offset.y+shape.y-error) && pasty <= (this.offset.y+shape.y)+shape.height+error)

@@ -5,12 +5,12 @@ var kkeys 	= {},
 	};
 	
 var handleKeyPresses = function() {
-	$(document).keydown(function(e) {				
+	window.onkeydown = (function(e) {				
 		kkeys[String.fromCharCode(e.keyCode)] = true;	
 		//Prevent beep
 		return false;
 	});
-	$(document).keyup(function(e) {
+	window.onkeyup = (function(e) {
 		kkeys[String.fromCharCode(e.keyCode)] = false;
 	});	
 };	
