@@ -14,7 +14,7 @@ var Character = function(parameters, spawn /*Pushes new character by default*/) 
 		x: 0,
 		y: 0
 	};								
-	this.collisions = collisions;	
+	this.collisions = collisions;
 		
 	this.text = parameters.text;			
 		
@@ -41,28 +41,48 @@ Character.prototype = {
 				ctx.font         = 'italic 30px sans-serif';
 				ctx.textBaseline = 'top';
 				if( text )
-					console.log("Filling"), ctx.fillText(text, rect.x+offset.x, height-(rect.y+offset.y));
+					/*console.log("Filling"), */ctx.fillText(text, rect.x+offset.x, height-(rect.y+offset.y));
 			}
 		})(this.shapes, this.offset);
 	},
-	move: function(t) {
+	move: function(t,gravity) {
 		//Speed is a function of time -- more natural than position
-		this.offset.x += this.speed.x.call(this, t);
-		this.offset.y += this.speed.y.call(this, t);
+		var deduction;
+		if( this.gravityStart )
+			deduction = t-(this.gravityStart*gravity);
+			
+		var xSpeed = this.speed.x.call(this, t),
+			ySpeed = this.speed.y.call(this, t);
+		ySpeed = deduction?ySpeed-deduction:(
+			t==this.gravityStart?ySpeed:0
+		);
+		if( this.fixed ) {
+			console.log("FIXED");
+			this.offset.x += this.speed.x.call(this, t);
+			this.offset.y += this.speed.y.call(this, t);
+		} else {
+			this.offset.x += xSpeed;
+			this.offset.y += ySpeed;
+		}
+	},
+	gravityStart: null,
+	gravityReset: function() {
+		this.gravityStart = null;
 	},
 	isOccupied: function(x,y) {
 		for( var k in this.shapes ) {
 			var shape = this.shapes[k],
-				pastx = x + (shape.width  || shape.size),
-				pasty = y + (shape.height || shape.size);							
+				pastx = x,
+				pasty = y;							
 		
 		//Check if x is in range [offset.x + shape.x, offset.x + shape.x + size]
 		//Check if y is in range [offset.y + shape.y, offset.y + shape.y + size]
 		
-		var error = 2;
+		var error = 0;				
+		
 		if(
-				(pastx >= (this.offset.x+shape.x-error) && pastx <= (this.offset.x+shape.x)+shape.width+error) &&
-				(pasty >= (this.offset.y+shape.y-error) && pasty <= (this.offset.y+shape.y)+shape.height+error)
+				(pastx >= (this.offset.x+shape.x)-error && pastx <= (this.offset.x+shape.x)+shape.width+error) &&
+				(pasty <= (this.offset.y+shape.y)-error && pasty >= (this.offset.y+shape.y)-shape.height+error)
 			) return true;
 		}
 		return false;
@@ -71,8 +91,8 @@ Character.prototype = {
 		for( var k in this.shapes ) {
 			if( !character || !character.shapes ) continue;
 			var shape  = character.shapes[k],
-				offset = character.offset;					
-			
+				offset = character.offset;											
+						
 			//Check corners for overlap
 			if(		(this.isOccupied(offset.x+shape.x, offset.y+shape.y)) ||
 					(this.isOccupied(offset.x+shape.x+(shape.width||shape.size), offset.y+shape.y)) ||
