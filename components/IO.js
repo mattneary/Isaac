@@ -4,8 +4,8 @@ keyCodes = {
 
 //Keyboard functions
 var kkeys 	= {},
-	isDown 	= function(char) {
-		return kkeys[char];
+	isDown 	= function(cchar) {
+		return kkeys[cchar];
 	};
 	
 var handleKeyPresses = function() {

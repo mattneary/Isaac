@@ -4,8 +4,8 @@ keyCodes = {
 
 //Keyboard functions
 var kkeys 	= {},
-	isDown 	= function(char) {
-		return kkeys[char];
+	isDown 	= function(cchar) {
+		return kkeys[cchar];
 	};
 	
 var handleKeyPresses = function() {
@@ -32,7 +32,7 @@ Object.prototype.extend = function(/* variable number of arguments */) {
 var go = function(characters, callback) {				
 	var t = 0;
 	handleKeyPresses();
-	int = setInterval(function() {
+	inter = setInterval(function() {
 		ctx.clearRect(0,0,1000,1000);					
 		characters.move(t), characters.draw(t);
 		t++;				

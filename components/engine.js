@@ -10,12 +10,14 @@ Object.prototype.extend = function(/* variable number of arguments */) {
 };				
 
 //Main function	
-var go = function(characters) {				
+var go = function(characters, callback) {				
 	var t = 0;
 	handleKeyPresses();
-	int = setInterval(function() {
+	inter = setInterval(function() {
 		ctx.clearRect(0,0,1000,1000);					
 		characters.move(t), characters.draw(t);
 		t++;				
 	}, 30);
+	
+	callback && callback();
 };		

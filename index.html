@@ -6,7 +6,7 @@
 	<body>
 		<canvas id="cvs"></canvas>
 		<script>	
-			var int			/*Animation Interval*/,
+			var inter		/*Animation Interval*/,
 				cvs 		= document.getElementById('cvs'),
 				ctx 		= cvs.getContext('2d'),
 				characters 	= new CharacterList({}),
@@ -100,7 +100,7 @@
 			go(characters, function() {
 				setTimeout(function() {
 					//Limit time to 15 secs until animation is cancelled
-					clearInterval(int);
+					clearInterval(inter);
 					(new Character({
 						shapes: [new Rect({
 									x: 100,
