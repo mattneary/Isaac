@@ -1,3 +1,7 @@
+keyCodes = {
+	up: '&', left: '%', right: "'", down: '('
+};
+
 //Keyboard functions
 var kkeys 	= {},
 	isDown 	= function(char) {
