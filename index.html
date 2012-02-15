@@ -13,7 +13,7 @@
 				width 		= height = 500;
 			cvs.width 		= width,
 			cvs.height 		= height,
-			score			= 0,
+			score			= 0,			
 			//Character with empty shape and text function to show score
 			scoreboard		= new Character({
 				shapes: [new Rect({
@@ -26,41 +26,45 @@
 				text: function() {
 					return "Score: "+score;
 				},
-				title: "score_board"
-			});
+				title: "score_board"	//Used for collisions but also used internally
+			});			
 									
 			//Score-board
 			var incrementScore = function() {
 				score++;
-				
-				//Potentially handle scores here
 			};
 											
 			//Instances of characters	
 			var person = new Character({
 				shapes: [new Rect({
-							x: 25,
-							y: 25,
+							x: 35,
+							y: 55,
 							size: 25
 						})], 
 				title: "person", 
 				speeds: {
 					x: function(t) {																						
-						if( isDown("A") ) return -5;
-						if( isDown("D") ) return 5;
+						if( isDown(keyCodes.left) ) return -5;
+						if( isDown(keyCodes.right) ) return 5;
 						return 0;
 					},
 					y: function(t) {
-						if( isDown("S") ) return -5;
-						if( isDown("W") ) return 5;
-						return 0;
-					}
+						if( isDown(keyCodes.down) ) return -5;
+						if( isDown(keyCodes.up) ) {
+							this.gravityStart = t;
+							return 10;
+						}
+						return this.gravityStart?10:0;	//If falling, upward force is same as when jump begins
+					}					
 				}, 
 				collisions: {
 					apple: function() {
 						apple.kill();
 						Apple().revive();
 						incrementScore();
+					},
+					ground: function() {						
+						person.gravityReset();
 					}				
 				}
 			});		
@@ -69,43 +73,48 @@
 			var Apple = function() {
 				return new Character({
 					shapes: [new Rect({
-								x: Math.random()*400,
-								y: Math.random()*400,
+								x: Math.random()*300,
+								y: Math.random()*300,
 								size: 10,
 								color: "#f00"
 							})], 
-					title: "apple", 
-					speeds: {
-						x: function(t) {
-							return 0;
-						},
-						y: function(t) {
-							return 0;
-						}
-					}
+					title: "apple"
 				});	
 			};
-			var apple = Apple();													
+			var apple = Apple();		//This assignment will be used repeatedly when "reviving" and when "killing"
+										//In general, characters should be leaked to the global scope in order to allow
+										//intuitive usage of their attributes
+			
+			var ground = new Character({
+				shapes: [new Rect({
+							x: 0,
+							y: 20,
+							width: 500,
+							height: 20,
+							color: "#f00"
+						})], 
+				title: "ground"
+			});												
 			
 			//GO!
-			go(characters);
-			setTimeout(function() {
-				//Limit time to 15 secs until animation is cancelled
-				clearInterval(int);
-				(new Character({
-					shapes: [new Rect({
-								x: 100,
-								y: 300,
-								width: 0,
-								height: 50,
-								color: '#f00'
-							})], 
-					text: function() {
-						return "Game Over (Score: "+score+")";
-					},
-					title: "score_board"
-				})).shade();
-			}, 15e3)
+			go(characters, function() {
+				setTimeout(function() {
+					//Limit time to 15 secs until animation is cancelled
+					clearInterval(int);
+					(new Character({
+						shapes: [new Rect({
+									x: 100,
+									y: 300,
+									width: 0,
+									height: 50,
+									color: '#f00'
+								})], 
+						text: function() {
+							return "Game Over (Score: "+score+")";
+						}
+					})).shade();
+				}, 15e3);
+			});
 		</script>
 	</body>
 </html>
