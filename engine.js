@@ -17,14 +17,15 @@ var handleKeyPresses = function() {
 	window.onkeyup = (function(e) {
 		kkeys[String.fromCharCode(e.keyCode)] = false;
 	});	
-};	//Simple extension
+};	//var inter;	//Animation Interval
+
+//Simple extension
 Object.prototype.extend = function(/* variable number of arguments */) {
 	var args = Array.prototype.slice.call(arguments);
 	for( var k in args ) {
 		var push = typeof(arguments[k]) != "function" ? arguments[k] : {};
-		console.log(push);
 		for(var k in push)
-			this[k] = push[k];
+			this[k] = (k != 0 && this[k] ? this[k] : push[k]);
 	}
 };	
 
@@ -36,7 +37,8 @@ var Scene = function(characters, options) {
 		y: function() { return 0 }
 	};
 	this.go = function(callback) {
-		var t = 0;
+		var t = 0,	//Restricted to closure to potentially allow simultaneous scenes
+			inter;
 		handleKeyPresses();
 		inter = setInterval(function() {
 			ctx.clearRect(0,0,1000,1000);					
@@ -44,43 +46,25 @@ var Scene = function(characters, options) {
 			t++;				
 		}, 30);
 		
-		callback && callback();
+		callback && callback(inter);
 	};
 };var Rect = function(options) {				
-	var color = options.color || "#000", 
-		x = options.x, 
-		y = options.y, 
-		width = options.width, 
-		height = options.height, 
-		size = options.size;
-	this.x = x;
-	this.y = y;
-	this.color = color;
-	
-	//Either maintain height, width or just size
-	this.width = width || size;
-	this.height = height || size;
+	this.extend(options, {
+		width: options.size,
+		height: options.size,
+		color: "#000"
+	});
 };	var Character = function(parameters, spawn /*Pushes new character by default*/) {							
-	shapes = parameters.shapes || [], 
-	title = parameters.title || "", 
-	speeds = parameters.speeds || {x: Function('return 0'), y: Function('return 0')}, 
-	collisions = parameters.collisions || {};
-				
-	this.title = title;
-	this.shapes = shapes;				
-	this.speed = {
-		x: speeds.x,
-		y: speeds.y
-	};
-	this.offset = {
-		x: 0,
-		y: 0
-	};								
-	this.collisions = collisions;
-		
-	this.text = parameters.text;			
-		
-	if( spawn !== false ) characters[title] = this;				
+	this.extend(parameters, {
+		shapes: [],
+		title: "",
+		speed: {x: Function('return 0'), y: Function('return 0')},
+		collisions: {},
+		offset: {
+			x: 0, y: 0
+		}
+	});					
+	if( spawn !== false ) characters[parameters.title] = this;				
 };
 
 Character.prototype = {
@@ -90,20 +74,14 @@ Character.prototype = {
 		(function(rects, offset, overrideColor) {
 			for( var k in rects ) {
 				var rect = rects[k];					
-				//Defaults
-				rect.width 	= rect.width  || rect.size,
-				rect.height = rect.height || rect.size;
-				offset = offset || {
-					x: 0, y: 0
-				};				
-		
+				
 				ctx.fillStyle = overrideColor || rect.color;											
 				ctx.fillRect(rect.x+offset.x, cvs.height-(rect.y+offset.y), rect.width, rect.height);		
 				
 				ctx.font         = 'italic 30px sans-serif';
 				ctx.textBaseline = 'top';
 				if( text )
-					/*console.log("Filling"), */ctx.fillText(text, rect.x+offset.x, cvs.height-(rect.y+offset.y));
+					ctx.fillText(text, rect.x+offset.x, cvs.height-(rect.y+offset.y));
 			}
 		})(this.shapes, this.offset);
 	},
@@ -111,7 +89,7 @@ Character.prototype = {
 		//Speed is a function of time -- more natural than position
 		var deduction;
 		if( this.jumpStartTime /*If currently jumping*/ )
-			deduction = t-(this.jumpStartTime*gravity);	//Compounded acceleration
+			deduction = t-(this.jumpStartTime*gravity);	//Compounded negative acceleration
 			
 		var xSpeed = this.speed.x.call(this, t),
 			ySpeed = this.speed.y.call(this, t);
@@ -119,18 +97,16 @@ Character.prototype = {
 			t==this.jumpStartTime?ySpeed:0
 		);
 		if( this.fixed ) {
-			console.log("FIXED");
+			//Fixed in terms of gravity and scene movement
 			this.offset.x += this.speed.x.call(this, t);
 			this.offset.y += this.speed.y.call(this, t);
 		} else {
 			this.offset.x += xSpeed;
 			this.offset.y += ySpeed;
-		}
-		
-		if( !this.fixed ) {
+						
 			this.offset.x -= sceneSpeed.x(t);
 			this.offset.y -= sceneSpeed.y(t);
-		}
+		}		
 	},
 	jumpStartTime: null,
 	endJump: function() {
@@ -184,8 +160,7 @@ Character.prototype = {
 		characters[this.title] = this;
 	}
 };var CharacterList = function(arr) { 
-	for( var k in arr )
-		this[k] = arr[k];
+	this.extend(arr);
 };	
 
 //Character extends Array, extended with move and draw

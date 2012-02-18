@@ -5,17 +5,20 @@
 	</head>
 	<body>
 		<canvas id="cvs"></canvas>
-		<script>	
-			var inter		/*Animation Interval*/,
-				cvs 		= document.getElementById('cvs'),
+		<script>
+			//Object.extend used internally:
+			//	object.extend(foundation, defaults[, defaults, ...])
+			//	i.e., A function of starting values and fallback values
+				
+			var cvs 		= document.getElementById('cvs'),
 				ctx 		= cvs.getContext('2d'),
-				characters 	= new CharacterList({}),
-				width 		= height = 500;
-			cvs.width 		= width,
-			cvs.height 		= height,
-			score			= 0,			
+				characters 	= new CharacterList({});
+				
+			cvs.width 		= cvs.height =  500,
+			score			= 0;
+						
 			//Character with empty shape and text function to show score
-			scoreboard		= new Character({
+			var scoreboard	= new Character({
 				shapes: [new Rect({
 							x: 0,
 							y: 500,
@@ -26,10 +29,10 @@
 				text: function() {
 					return "Score: "+score;
 				},
+				fixed: true,
 				title: "score_board"	//Used for collisions but also used internally
 			});			
 									
-			//Score-board
 			var incrementScore = function() {
 				score++;
 			};
@@ -42,7 +45,7 @@
 							size: 25
 						})], 
 				title: "person", 
-				speeds: {
+				speed: {
 					x: function(t) {																						
 						if( isDown(keyCodes.left) ) return -5;
 						if( isDown(keyCodes.right) ) return 5;
@@ -50,11 +53,9 @@
 					},
 					y: function(t) {
 						if( isDown(keyCodes.down) ) return -5;
-						if( isDown(keyCodes.up) ) {
-							this.gravityStart = t;
-							return 10;
-						}
-						return this.gravityStart?10:0;	//If falling, upward force is same as when jump begins
+						if( isDown(keyCodes.up) /*Only start jump if not already jumping: !this.jumpStartTime*/ )
+							return this.startJump(t,10);
+						return this.currentVelocity();	//Take into account gravity + jump
 					}					
 				}, 
 				collisions: {
@@ -64,7 +65,7 @@
 						incrementScore();
 					},
 					ground: function() {						
-						person.gravityReset();
+						person.endJump();
 					}				
 				}
 			});		
@@ -73,8 +74,8 @@
 			var Apple = function() {
 				return new Character({
 					shapes: [new Rect({
-								x: Math.random()*300,
-								y: Math.random()*300,
+								x: 100+Math.random()*300,
+								y: 500-Math.random()*300,
 								size: 10,
 								color: "#f00"
 							})], 
@@ -93,11 +94,18 @@
 							height: 20,
 							color: "#f00"
 						})], 
-				title: "ground"
+				title: "ground",
+				fixed: true
 			});												
 			
-			//GO!
-			go(characters, function() {
+			//GO!		
+			(new Scene(characters, {
+				//attributes
+				speed: {
+					x: function() { return .25 },
+					y: function() { return 0 }
+				}
+			})).go(function(inter) {
 				setTimeout(function() {
 					//Limit time to 15 secs until animation is cancelled
 					clearInterval(inter);
@@ -112,9 +120,22 @@
 						text: function() {
 							return "Game Over (Score: "+score+")";
 						}
-					})).shade();
+					})).shade();	//Force animation even after interval stops
 				}, 15e3);
 			});
+			/*
+			Simplest Use case:
+			(new Scene(
+				new CharacterList({
+					block: new Character({
+						shapes: [new Rect({
+							size: 100, x: 100, y: 100
+						})],
+						title: "block"
+					})
+				})
+			)).go()
+			*/
 		</script>
 	</body>
 </html>

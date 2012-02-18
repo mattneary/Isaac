@@ -1,24 +1,14 @@
 var Character = function(parameters, spawn /*Pushes new character by default*/) {							
-	shapes = parameters.shapes || [], 
-	title = parameters.title || "", 
-	speeds = parameters.speeds || {x: Function('return 0'), y: Function('return 0')}, 
-	collisions = parameters.collisions || {};
-				
-	this.title = title;
-	this.shapes = shapes;				
-	this.speed = {
-		x: speeds.x,
-		y: speeds.y
-	};
-	this.offset = {
-		x: 0,
-		y: 0
-	};								
-	this.collisions = collisions;
-		
-	this.text = parameters.text;			
-		
-	if( spawn !== false ) characters[title] = this;				
+	this.extend(parameters, {
+		shapes: [],
+		title: "",
+		speed: {x: Function('return 0'), y: Function('return 0')},
+		collisions: {},
+		offset: {
+			x: 0, y: 0
+		}
+	});					
+	if( spawn !== false ) characters[parameters.title] = this;				
 };
 
 Character.prototype = {
@@ -28,20 +18,14 @@ Character.prototype = {
 		(function(rects, offset, overrideColor) {
 			for( var k in rects ) {
 				var rect = rects[k];					
-				//Defaults
-				rect.width 	= rect.width  || rect.size,
-				rect.height = rect.height || rect.size;
-				offset = offset || {
-					x: 0, y: 0
-				};				
-		
+				
 				ctx.fillStyle = overrideColor || rect.color;											
 				ctx.fillRect(rect.x+offset.x, cvs.height-(rect.y+offset.y), rect.width, rect.height);		
 				
 				ctx.font         = 'italic 30px sans-serif';
 				ctx.textBaseline = 'top';
 				if( text )
-					/*console.log("Filling"), */ctx.fillText(text, rect.x+offset.x, cvs.height-(rect.y+offset.y));
+					ctx.fillText(text, rect.x+offset.x, cvs.height-(rect.y+offset.y));
 			}
 		})(this.shapes, this.offset);
 	},
@@ -49,7 +33,7 @@ Character.prototype = {
 		//Speed is a function of time -- more natural than position
 		var deduction;
 		if( this.jumpStartTime /*If currently jumping*/ )
-			deduction = t-(this.jumpStartTime*gravity);	//Compounded acceleration
+			deduction = t-(this.jumpStartTime*gravity);	//Compounded negative acceleration
 			
 		var xSpeed = this.speed.x.call(this, t),
 			ySpeed = this.speed.y.call(this, t);
@@ -57,18 +41,16 @@ Character.prototype = {
 			t==this.jumpStartTime?ySpeed:0
 		);
 		if( this.fixed ) {
-			console.log("FIXED");
+			//Fixed in terms of gravity and scene movement
 			this.offset.x += this.speed.x.call(this, t);
 			this.offset.y += this.speed.y.call(this, t);
 		} else {
 			this.offset.x += xSpeed;
 			this.offset.y += ySpeed;
-		}
-		
-		if( !this.fixed ) {
+						
 			this.offset.x -= sceneSpeed.x(t);
 			this.offset.y -= sceneSpeed.y(t);
-		}
+		}		
 	},
 	jumpStartTime: null,
 	endJump: function() {

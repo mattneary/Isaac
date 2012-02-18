@@ -1,6 +1,5 @@
 var CharacterList = function(arr) { 
-	for( var k in arr )
-		this[k] = arr[k];
+	this.extend(arr);
 };	
 
 //Character extends Array, extended with move and draw
