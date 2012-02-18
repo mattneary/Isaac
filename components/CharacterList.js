@@ -9,7 +9,7 @@ CharacterList.prototype.extend(Array.prototype, {
 		var characters = this;
 		for( var k in characters ) {		
 			character = characters[k];					
-			character && character.move && character.move(t,characters.gravity);					
+			character && character.move && character.move(t,characters.gravity,characters.sceneSpeed);					
 			
 			var collisions = character.collisions;
 			for( var k in collisions ) {
